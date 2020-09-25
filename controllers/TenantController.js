@@ -14,6 +14,18 @@ class TenantController {
         try {
             const tenant = await Tenant.create(req.body)
             if(tenant) {
+                //Create plan if any
+                if(req.body.plan && req.body.plan.section_id) {
+                    req.body.plan.tenant_id = tenant.id
+                    req.body.plan.user_id = req.user.id
+                    const plan = await Plan.create(req.body.plan)
+                    if(plan && req.body.payment && req.body.payment.amount) {
+                        req.body.payment.plan_id = plan.id
+                        req.body.payment.user_id = req.user.id
+                        const payment = await Payment.create(req.body.payment)
+                    }
+                }
+
                 await t.commit()
                 return res.status(200).send({
                     success : true,
@@ -40,10 +52,25 @@ class TenantController {
                 ],
             });
             if(tenants){
+                let myTenants = JSON.parse(JSON.stringify(tenants)) 
+                //Used at the frontend to create new tenant
+                let sections = await Section.findAll({
+                    where : { active : true },
+                    include : [{ model : Plan , where : { active : true }, required: false }]
+                })
+                myTenants.forEach(tenant => {
+                    tenant.active_plans = []
+                    tenant.Plans.forEach(plan => {
+                        if(plan.active) {
+                            tenant.active_plans.push(plan)
+                        }
+                    })
+                })
                 return res.status(200).send({
                     message : "Successfully fetched tenants",
                     success : true,
-                    tenants
+                    tenants : myTenants,
+                    sections
                 })
             }
 
@@ -213,13 +240,35 @@ class TenantController {
                 include: [
                     { model : Payment },
                     { model : Promises },
+                    { model : Section },
+                    { model : Tenant },
                 ],
             });
             if(plans){
+                let myPlans = JSON.parse(JSON.stringify(plans))
+                let expired = []
+                let active = []
+                myPlans.forEach(plan => {
+                    plan.payed = 0
+                    plan.Payments.forEach(payment => {
+                        plan.payed += payment.amount
+                    })
+                    if(plan.active){
+                        var dateNow = new Date();
+                        if(new Date(plan.expires_at) >= dateNow){
+                            active.push(plan)
+                        } else {
+                            expired.push(plan)
+                        }
+                    }
+                })
                 return res.status(200).send({
                     message : "Successfully fetched plans",
                     success : true,
-                    plans
+                    plans : myPlans,
+                    active,
+                    expired
+
                 })
             }
 

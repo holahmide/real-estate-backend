@@ -1,5 +1,5 @@
 const Op = require('sequelize').Op;
-const { Building, Section, Plan, sequelize } = require('../models')
+const { Building, Section, Plan, Tenant, Payment, sequelize } = require('../models')
 
 class BuildingController {
     static async create (req, res) {
@@ -23,6 +23,7 @@ class BuildingController {
                 await t.commit()
                 let building = createBuilding
                 building.code = code
+
                 return res.status(200).send({
                     message : "Successfully created building",
                     success : true,
@@ -46,14 +47,32 @@ class BuildingController {
             const buildings = await Building.findAll({ 
                 where : { active : true },
                 include: [
-                    { model : Section },
+                    { model : Section, include : [ {model : Plan, include : [ Tenant, Payment ] } ]  },
                 ],
             });
             if(buildings){
+                let myBuildings = JSON.parse(JSON.stringify(buildings))
+                // Sort Data
+                myBuildings.map(building => {
+                    building.Sections.map(section => {
+                        section.plan = null
+                        section.Plans.map(plan => {
+                            plan.payed = 0
+                            plan.Payments.map(payment => {
+                                plan.payed += payment.amount
+                            })
+                            delete plan.Payments
+                            if(plan.active == true) {
+                                section.plan = plan
+                            }
+                        })
+                    })
+                    building.Sections.reverse()
+                });
                 return res.status(200).send({
                     message : "Successfully fetched buildings",
                     success : true,
-                    buildings
+                    buildings : myBuildings
                 })
             }
 
@@ -181,7 +200,7 @@ class BuildingController {
 
     ////// Building >> Section
     static async createSection (req, res) {
-        if(!req.body.type && !req.body.building) {
+        if(!req.body.type || !req.body.building) {
             return res.status(400).send({
                 success: false,
                 message : "Section details incomplete"
@@ -201,7 +220,7 @@ class BuildingController {
         const t = await sequelize.transaction()
         try {
             const createSection = await Section.create(req.body)
-            const code = building.code + createSection.id
+            const code = building.code + '-' + createSection.id
             if(createSection){
                 const setCode = await Section.update(
                     {

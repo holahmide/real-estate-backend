@@ -1,5 +1,5 @@
 const Op = require('sequelize').Op;
-const { Tenant, Plan, Section, Payment, Promises, sequelize } = require('../models')
+const { Tenant, Plan, Section, Payment, Promises, User, sequelize } = require('../models')
 
 class PaymentController {
     static async createPayment(req, res) {
@@ -21,12 +21,19 @@ class PaymentController {
         const t = await sequelize.transaction()
         try {
             const payment = await Payment.create(req.body)
+            const paymentDetails = await Payment.findOne({
+                where : { id : payment.id },
+                include: [
+                    { model : Plan, include : [ Tenant, Section ] },
+                    {model : User }
+                ],
+            });
             if(payment) {
                 await t.commit()
                 return res.status(200).send({
                     success : true,
                     message : "Successfully recorded payment",
-                    payment
+                    payment : paymentDetails
                 })
             }
         } catch (error) {
@@ -44,7 +51,8 @@ class PaymentController {
             const payments = await Payment.findAll({ 
                 // where : { active : true },
                 include: [
-                    { model : Plan, include : [ Tenant ] },
+                    { model : Plan, include : [ Tenant, Section ] },
+                    {model : User }
                 ],
             });
             if(payments){
@@ -136,7 +144,7 @@ class PaymentController {
             const promises = await Promises.findAll({ 
                 // where : { active : true },
                 include: [
-                    { model : Plan, include : [ Section] },
+                    { model : Plan, include : [ Section, Tenant] },
                 ],
             });
             if(promises){

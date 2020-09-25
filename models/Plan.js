@@ -8,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.DATE,
           allowNull: true,
         },
+        expires_at : {
+          type: DataTypes.DATE,
+          allowNull: false,
+        },
         active : {
           type: DataTypes.BOOLEAN,
           defaultValue : true,

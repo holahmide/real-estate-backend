@@ -25,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true,
             unique : true
         },
+        price : {
+            type: DataTypes.BIGINT(12),
+            allowNull: true,
+        },
         // created_by : {
         //     type: DataTypes.INTEGER,
         //     allowNull: true,
