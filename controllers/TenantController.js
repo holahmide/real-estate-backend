@@ -199,7 +199,7 @@ class TenantController {
         if(!req.body.started_at || !req.body.amount || !req.body.tenant_id || !req.body.section_id) {
             return res.status(400).send({
                 success: false,
-                message : "Plan Basic information incomplete"
+                message : "Plan's Basic information incomplete"
             })
         }
 
@@ -236,7 +236,7 @@ class TenantController {
     static async getPlans (req, res) {
         try {
             const plans = await Plan.findAll({ 
-                // where : { active : true },
+                where : { active : true },
                 include: [
                     { model : Payment },
                     { model : Promises },
@@ -339,6 +339,86 @@ class TenantController {
             return res.status(400).send({
                 success : false,
                 message : "Unable to update plan information",
+                error : error.toString() || "Failed"
+            })
+        }
+    }
+
+    static async deletePlan (req, res) {
+        if(!req.params.id && Number(req.params.id)) {
+            return res.status(400).send({
+                message : "Plan not found",
+                success : false
+            })
+        }
+
+        const findPlan = await Plan.findByPk(req.params.id)
+        if(!findPlan) {
+            return res.status(400).send({
+                message : "Plan not found",
+                success : false
+            })
+        }{}
+
+        try {
+            const deletePlan = await Plan.update(
+                {active : false},
+                { where :{id : req.params.id }}
+            )
+            if(deletePlan){
+                return res.status(200).send({
+                    message : "Successfully deleted plan",
+                    success : true,
+                })
+            }
+
+        } catch (error) {
+            return res.status(400).send({
+                success : false,
+                message : "Unable to delete plan",
+                error : error.toString() || "Failed"
+            })
+        }
+    }
+
+    static async renewPlan(req, res) {
+        if(!req.body.old_plan || !req.body.started_at || !req.body.amount || !req.body.tenant_id || !req.body.section_id) {
+            return res.status(400).send({
+                success: false,
+                message : "Plan's Basic information incomplete"
+            })
+        }
+
+        const tenant = await Tenant.findByPk(req.body.tenant_id)
+        const section = await Section.findByPk(req.body.section_id)
+        if(!tenant || !section) {
+            return res.status(400).send({
+                success: false,
+                message : "Tenant or section does not exist"
+            })
+        }
+
+        const t = await sequelize.transaction()
+        try {
+            const old_plan = await Plan.update(
+                { active : false, finished_at : new Date()},
+                { where : {id : req.body.old_plan} }
+            )
+            const plan = await Plan.create(req.body)
+            if(plan) {
+                await t.commit()
+                return res.status(200).send({
+                    success : true,
+                    message : "Successfully renewed plan",
+                    plan,
+                    old_plan : req.body.old_plan
+                })
+            }
+        } catch (error) {
+            await t.rollback()
+            return res.status(400).send({
+                success : false,
+                message : "Unable to renew plan",
                 error : error.toString() || "Failed"
             })
         }

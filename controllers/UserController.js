@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const Op = require('sequelize').Op;
 const bcrypt = require("bcryptjs");
-const { User, Token } = require('../models')
+const { User, Token, sequelize } = require('../models')
 const config = require('../config')
 
 
@@ -63,15 +63,42 @@ class UserController {
                     refresh_token : tokens.refresh_token
                 });
             } else {
-                res.status(400).send({
+                return res.status(400).send({
                   message: "Incorrect Email or Password",
                   success : false
                 });
             }
 
         } catch (error) {
-            res.status(400).send({ success : false, message: "Database error", error: error.toString() });   
+            return res.status(400).send({ success : false, message: "Database error", error: error.toString() });   
         }
+    }
+
+    static async register (req, res) {
+        if(!req.body.firstname || !req.body.lastname || !req.body.email || !req.body.password || !req.body.appId) {
+            return res.status(400).send({
+                success : false,
+                message : "Data provided is incomplete"
+            })
+        }
+
+        const user = req.body
+        const hashPassword = bcrypt.hashSync(user.password, 10);
+        user.password = hashPassword
+
+        try {
+            const registerUser = await User.create(req.body)
+            return res.status(200).send({
+                success : true,
+                message : "Successfully registered user",
+                user : registerUser
+            })
+        } catch (error) {
+            return res.status(400).send({
+                message: "Registeration failed!",
+                success : false
+              });
+        }        
     }
 
     static async state(req, res) {
@@ -84,25 +111,56 @@ class UserController {
     }
     
     static async edit (req, res) {
-        
+        if(!req.body.user_id || !req.body.firstname || !req.body.lastname || !req.body.email) {
+            return res.status(400).send({
+                success : false,
+                message : "Missing Parameters"
+            })
+        }
+        const t = await sequelize.transaction()
+        try {
+            const editUser = await User.update(
+                req.body,
+                { where : {id : req.body.user_id} }
+            )
+            const user = await User.findOne({ where : {id : req.body.user_id}})
+            delete user.password
+            await t.commit()
+            return res.send({
+                success : true,
+                message : 'Successfully edited details',
+                user
+            })
+        } catch (error) {
+            await t.rollback()
+            return res.status(400).send({ 
+                success : false, 
+                message: "Could not update user details", 
+                error: error.toString() 
+            });   
+        }
     }
 
     static async refresh (req, res) {
         try {
             const tokens = await generateToken(req.user)
 
-            return res.cookie("refresh_token", tokens.refresh_token, {
-                Domain : 'http://localhost:3000',
-                maxAge: config.authentication.refresh_token_expiry_time, //85400 * 1000,
-                httpOnly: true
-            }).status(200).send({
-                message : "Refreshed Token!",
-                success : true,
-                accessToken : tokens.token,
-                refresh_token : tokens.refresh_token
-            })
+            return res.cookie("refresh_token", tokens.refresh_token || '', {
+                    Domain : 'http://localhost:3000',
+                    maxAge: config.authentication.refresh_token_expiry_time || 100, //85400 * 1000,
+                    httpOnly: true
+                }).status(200).send({
+                    message : "Refreshed Token!",
+                    success : true,
+                    accessToken : tokens.token || '',
+                    refresh_token : tokens.refresh_token || ''
+                })
         } catch(error) {
-            return res.status(400).send({ success : false, message: "Database error", error: error.toString() });   
+            return res.status(400).send({ 
+                success : false, 
+                message: "Database error", 
+                error: error.toString() 
+            });   
         }
         
     }

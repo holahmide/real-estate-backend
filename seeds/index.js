@@ -10,7 +10,7 @@ class Seeds {
                 email : 'adeniyi.olamide@lmu.edu.ng',
                 firstname : 'Olamide',
                 lastname : 'Adeniyi',
-                role : "user",
+                role : "admin",
                 password : 'oluwaseyi'
             }
         ]

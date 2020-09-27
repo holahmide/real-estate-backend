@@ -24,8 +24,8 @@ class PaymentController {
             const paymentDetails = await Payment.findOne({
                 where : { id : payment.id },
                 include: [
-                    { model : Plan, include : [ Tenant, Section ] },
-                    {model : User }
+                    { model : Plan, include : [ Tenant, Payment, {model : Section, where :{ active : true}, required : false } ] },
+                    { model : User }
                 ],
             });
             if(payment) {
@@ -101,9 +101,44 @@ class PaymentController {
         }
     }
 
+    static async deletePayment (req, res) {
+        if(!req.params.id && Number(req.params.id)) {
+            return res.status(400).send({
+                message : "Payment not found",
+                success : false
+            })
+        }
+
+        const findPayment = await Payment.findByPk(req.params.id)
+        if(!findPayment) {
+            return res.status(400).send({
+                message : "Payment not found",
+                success : false
+            })
+        }
+
+        try {
+            const deletePayment = await Payment.destroy({where :{id : req.params.id }})
+            if(deletePayment){
+                return res.status(200).send({
+                    message : "Successfully deleted payment",
+                    success : true,
+                })
+            }
+
+        } catch (error) {
+            return res.status(400).send({
+                success : false,
+                message : "Unable to delete payment",
+                error : error.toString() || "Failed"
+            })
+        }
+    }
+
     /////Promises
     static async createPromise (req, res) {
-        if(!req.body.date || !req.body.plan_id) {
+        // if(!req.body.date || !req.body.plan_id) {
+        if((!req.body.date && !req.body.amount) || !req.body.plan_id) {
             return res.status(400).send({
                 success: false,
                 message : "Promised date not found"
@@ -121,12 +156,18 @@ class PaymentController {
         const t = await sequelize.transaction()
         try {
             const promise = await Promises.create(req.body)
+            const promiseDetails = await Promises.findOne({
+                where : { id : promise.id },
+                include: [
+                    { model : Plan, include : [ Section, Tenant] },
+                ],
+            });
             if(promise) {
                 await t.commit()
                 return res.status(200).send({
                     success : true,
                     message : "Successfully recorded promise",
-                    promise
+                    promise : promiseDetails
                 })
             }
         } catch (error) {
@@ -142,7 +183,7 @@ class PaymentController {
     static async getPromises (req, res) {
         try {
             const promises = await Promises.findAll({ 
-                // where : { active : true },
+                where : { fufilled : false },
                 include: [
                     { model : Plan, include : [ Section, Tenant] },
                 ],

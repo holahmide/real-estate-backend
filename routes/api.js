@@ -5,6 +5,7 @@ const UserController = require('../controllers/UserController')
 const BuildingController = require('../controllers/BuildingController')
 const TenantController = require('../controllers/TenantController')
 const PaymentController = require('../controllers/PaymentController')
+const HomeController = require('../controllers/HomeController')
 
 router.get('/', (req, res) => {
     res.send({
@@ -13,11 +14,16 @@ router.get('/', (req, res) => {
     })
 })
 
+//Home
+router.get('/home', HomeController.index)
+
 // Authentication
 router.post('/auth/login', UserController.login)
+router.post('/auth/register', jwtAuth.verifyToken, UserController.register)
 router.get('/auth/state', jwtAuth.verifyToken, UserController.state)
 // router.get('/refresh', jwtAuth.verifyRefreshToken, UserController.refresh)
 router.post('/auth/refresh', jwtAuth.verifyRefreshToken, UserController.refresh)
+router.post('/auth/update', jwtAuth.verifyToken, UserController.edit)
 
 
 //Building
@@ -38,14 +44,15 @@ router.delete('/sections/delete/:id', jwtAuth.verifyToken, BuildingController.de
 router.get('/tenants/all', jwtAuth.verifyToken, TenantController.getTenants)
 router.get('/tenants/:id', jwtAuth.verifyToken, TenantController.readTenant)
 router.post('/tenants/create', jwtAuth.verifyToken, TenantController.createTenant)
-router.put('/tenants/update/:id', jwtAuth.verifyToken, TenantController.updateTenant)
+router.patch('/tenants/update/:id', jwtAuth.verifyToken, TenantController.updateTenant)
 router.delete('/tenants/delete/:id', jwtAuth.verifyToken, TenantController.deleteTenant)
 //>>>Plan
 router.get('/plans/all', jwtAuth.verifyToken, TenantController.getPlans)
 router.get('/plans/:id', jwtAuth.verifyToken, TenantController.readPlan)
 router.post('/plans/create', jwtAuth.verifyToken, TenantController.createPlan)
 router.patch('/plans/update/:id', jwtAuth.verifyToken, TenantController.updatePlan)
-// router.delete('/tenants/delete/:id', jwtAuth.verifyToken, TenantController.deleteTenant)
+router.post('/plans/renew', jwtAuth.verifyToken, TenantController.renewPlan)
+router.delete('/plans/delete/:id', jwtAuth.verifyToken, TenantController.deletePlan)
 
 
 //Payment
@@ -53,7 +60,7 @@ router.get('/payments/all', jwtAuth.verifyToken, PaymentController.getPayments)
 // router.get('/promises/:id', jwtAuth.verifyToken, PaymentController.readPromise)
 router.post('/payments/create', jwtAuth.verifyToken, PaymentController.createPayment)
 router.patch('/payments/update/:id', jwtAuth.verifyToken, PaymentController.updatePayment)
-// router.delete('/promises/delete/:id', jwtAuth.verifyToken, PaymentController.deletePromise)
+router.delete('/payments/delete/:id', jwtAuth.verifyToken, PaymentController.deletePayment)
 //>>>Promises
 router.get('/promises/all', jwtAuth.verifyToken, PaymentController.getPromises)
 router.get('/promises/:id', jwtAuth.verifyToken, PaymentController.readPromise)

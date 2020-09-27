@@ -69,14 +69,19 @@ verifyRefreshToken = (req, res, next) => {
 
     // Check database for refresh token
       const findRefreshToken = Token.findOne({ where: { user_id : decoded.id, token : token } })
-      .then(RefreshToken => {
-          if (!RefreshToken) {
-              return res.status(400).send({
-                  message: "Refresh Token was not found",
-                  success : false
-              });
-          }
-      });
+        .then(RefreshToken => {
+            if (!RefreshToken) {
+                return res.status(400).send({
+                    message: "Refresh Token was not found",
+                    success : false
+                });
+            }
+        }).catch( error => {
+                return res.status(400).send({
+                    message: "Error trying to find refresh token",
+                    success : false
+                });
+        });
 
       //check expiry date
       var dateNow = new Date();

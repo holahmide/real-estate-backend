@@ -2,7 +2,7 @@ module.exports = (sequelize, DataTypes) => {
     const Promises =  sequelize.define('Promises', {
         date : {
             type: DataTypes.DATE,
-            allowNull: false,
+            allowNull: true,
         },
         amount : {
             type: DataTypes.BIGINT(12),

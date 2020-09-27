@@ -47,7 +47,7 @@ class BuildingController {
             const buildings = await Building.findAll({ 
                 where : { active : true },
                 include: [
-                    { model : Section, include : [ {model : Plan, include : [ Tenant, Payment ] } ]  },
+                    { model : Section, where : { active : true } , include : [ {model : Plan, include : [ Tenant, Payment ], where : { active : true }, required: false } ]  },
                 ],
             });
             if(buildings){
@@ -376,7 +376,11 @@ class BuildingController {
         }
 
         try {
-            const deleteSection = await Section.destroy({where :{id : req.params.id }})
+            // const deleteSection = await Section.destroy({where :{id : req.params.id }})
+            const deleteSection = await Section.update(
+                {active : false },
+                { where :{id : req.params.id }}
+            )
             if(deleteSection){
                 return res.status(200).send({
                     message : "Successfully deleted section from building",
