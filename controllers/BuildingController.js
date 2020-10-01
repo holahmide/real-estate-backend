@@ -47,7 +47,7 @@ class BuildingController {
             const buildings = await Building.findAll({ 
                 where : { active : true },
                 include: [
-                    { model : Section, where : { active : true } , include : [ {model : Plan, include : [ Tenant, Payment ], where : { active : true }, required: false } ]  },
+                    { model : Section, where : { active : true }, required : false , include : [ {model : Plan, include : [ Tenant, Payment ], where : { active : true }, required: false } ]  },
                 ],
             });
             if(buildings){
@@ -220,7 +220,9 @@ class BuildingController {
         const t = await sequelize.transaction()
         try {
             const createSection = await Section.create(req.body)
-            const code = building.code + '-' + createSection.id
+            let countBuildingSections = await Section.count({where : {building_id : building.id}})
+            // const code = building.code + '-' + createSection.id
+            const code = building.code + '-' + countBuildingSections
             if(createSection){
                 const setCode = await Section.update(
                     {
@@ -234,7 +236,8 @@ class BuildingController {
                 return res.status(200).send({
                     message : "Successfully created section",
                     success : true,
-                    section
+                    section,
+                    countBuildingSections
                 })
 
             }

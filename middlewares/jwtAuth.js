@@ -33,6 +33,7 @@ verifyToken = (req, res, next) => {
             .then(user => {
                 if (!user) {
                     return res.status(400).send({
+                        decoded,
                         message: "User was not found",
                         success : false
                     });
