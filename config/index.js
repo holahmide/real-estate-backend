@@ -3,7 +3,7 @@ const path = require('path')
 module.exports = {
     port: process.env.PORT || 3000,
     db : {
-        database: process.env.DB_NAME || 'real_estate1',
+        database: process.env.DB_NAME || 'real_estate',
         user: process.env.DB_USER || 'root',
         password: process.env.DB_PASS || '',
         options: {
