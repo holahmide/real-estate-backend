@@ -12,10 +12,6 @@ module.exports = (sequelize, DataTypes) => {
             type : DataTypes.BOOLEAN,
             defaultValue : false
         }
-        // created_by : {
-        //     type: DataTypes.INTEGER,
-        //     allowNull: true,
-        // },
     })
   
     

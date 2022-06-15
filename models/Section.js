@@ -29,10 +29,6 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.BIGINT(12),
             allowNull: true,
         },
-        // created_by : {
-        //     type: DataTypes.INTEGER,
-        //     allowNull: true,
-        // },
     })
   
     
