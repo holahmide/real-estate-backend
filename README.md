@@ -1,5 +1,5 @@
 # Getting Started with Real Estate Management API
-> The project provides api to manage real Estate buildings, sections, plans and tenants.
+> The project provides api to manage Real Estate/ Rental buildings, sections, plans and tenants.
 
 > The project uses NodeJs (NPM) and MySql Database.
 #### Setup codebase

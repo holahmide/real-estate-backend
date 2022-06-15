@@ -6,7 +6,6 @@ verifyToken = (req, res, next) => {
     let token = req.headers["x-access-token"];
 
     if (!token) {
-    //   return res.status(403).send({
         return res.status(401).send({
            message: "No token provided!",
            success : false
@@ -47,7 +46,6 @@ verifyToken = (req, res, next) => {
 }
 
 verifyRefreshToken = (req, res, next) => {
-    // let token = req.cookies.refresh_token;
     let token = req.body.refresh_token;
 
     if (!token || typeof token == "undefined") {
