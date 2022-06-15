@@ -15,6 +15,7 @@ router.get('/', (req, res) => {
 })
 
 //Home
+router.post('/home/statement', HomeController.statement)
 router.get('/home', HomeController.index)
 
 // Authentication

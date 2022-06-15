@@ -1,21 +1,21 @@
 module.exports = (sequelize, DataTypes) => {
-    const Tenant =  sequelize.define('Tenant', {
+    const Guarantor =  sequelize.define('Guarantor', {
         email: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          unique: true
+            type: DataTypes.STRING,
+            allowNull: true,
+            // unique: true
         },
         firstname: {
-          type: DataTypes.STRING,
-          allowNull: false,
+            type: DataTypes.STRING,
+            allowNull: false,
         },
         lastname: {
-          type: DataTypes.STRING,
-          allowNull: false,
+            type: DataTypes.STRING,
+            allowNull: false,
         },
         occupation : {
-          type: DataTypes.STRING,
-          allowNull: true,
+            type: DataTypes.STRING,
+            allowNull: true,
         },
         work_status : {
             type: DataTypes.STRING,
@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
         phone : {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true
+            // unique: true
         },
         place_of_work : {
             type: DataTypes.STRING,
@@ -41,11 +41,9 @@ module.exports = (sequelize, DataTypes) => {
     })
   
     
-    Tenant.associate = function(models) {
-      Tenant.hasMany(models.Plan)
-      Tenant.belongsTo(models.User, { foreignKey: 'user_id' });
-      Tenant.hasOne(models.Guarantor)
-    };
+      Guarantor.associate = function(models) {
+        Guarantor.belongsTo(models.Tenant, { foreignKey: 'tenant_id' });
+      };
   
-    return Tenant
+    return Guarantor
   }

@@ -1,9 +1,10 @@
 const Op = require('sequelize').Op;
-const { Tenant, Plan, Section, Payment, Promises, sequelize } = require('../models')
+const { Tenant, Plan, Section, Payment, Promises, Guarantor, sequelize } = require('../models');
 
 class TenantController {
     static async createTenant (req, res) {
-        if(!req.body.email || !req.body.firstname || !req.body.lastname || !req.body.phone) {
+        // if(!req.body.email || !req.body.firstname || !req.body.lastname || !req.body.phone) {
+        if(!req.body.firstname || !req.body.lastname) {
             return res.status(400).send({
                 success: false,
                 message : "Tenant Basic information incomplete"
@@ -12,7 +13,7 @@ class TenantController {
 
         const t = await sequelize.transaction()
         try {
-            const tenant = await Tenant.create(req.body)
+            let tenant = await Tenant.create(req.body)
             if(tenant) {
                 //Create plan if any
                 if(req.body.plan && req.body.plan.section_id) {
@@ -24,6 +25,16 @@ class TenantController {
                         req.body.payment.user_id = req.user.id
                         const payment = await Payment.create(req.body.payment)
                     }
+                }
+
+                //Create Guarantor if any
+                tenant = JSON.parse(JSON.stringify(tenant))
+                tenant.Guarantor = {}
+                if(req.body.guarantor && req.body.guarantor.phone){
+                    req.body.guarantor.tenant_id = tenant.id
+                    const createGuarantor = await Guarantor.create(req.body.guarantor)
+                    let guarantor = JSON.parse(JSON.stringify(createGuarantor))
+                    tenant.Guarantor = guarantor
                 }
 
                 await t.commit()
@@ -48,7 +59,8 @@ class TenantController {
             const tenants = await Tenant.findAll({ 
                 // where : { active : true },
                 include: [
-                    { model : Plan, include : [ Section] },
+                    { model : Plan, include : [ Section ] },
+                    { model : Guarantor }
                 ],
             });
             if(tenants){
@@ -66,6 +78,12 @@ class TenantController {
                         }
                     })
                 })
+
+                myTenants.sort(function compare(a, b) {
+                    var A = a.id;
+                    var B = b.id;
+                    return A - B;
+                });
                 return res.status(200).send({
                     message : "Successfully fetched tenants",
                     success : true,

@@ -76,7 +76,8 @@ class HomeController {
                 const date2 = new Date(plan.expires_at);
                 const diffTime = Math.abs(date2 - date1);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                if(diffDays < 35 && diffDays > 0) {
+                // if(diffDays < 32 && diffDays > 0) {
+                if(diffDays < 32) {
                     stats.notices.push(plan)
                 }
             })
@@ -112,6 +113,74 @@ class HomeController {
         
     }
 
+    static async statement (req, res) {
+        if(!req.body.tenant) {
+            return res.status(400).send({
+                message : "Tenant is required!"
+            })
+        }
+
+        try {
+            const tenant = await Tenant.findOne({
+                where : { id : req.body.tenant },
+                include : [ 
+                    { model : Plan , order : ['id', 'DESC'], required : false, include : [ Payment, Section ]}
+                ]
+            })
+            // let plans = JSON.parse(JSON.stringify(tenant.Plans))
+            let plans = JSON.parse(JSON.stringify(tenant.Plans))
+            const details = {
+                firstname : tenant.firstname,
+                lastname : tenant.lastname,
+                email : tenant.email,
+                phone : tenant.phone,
+                from : (plans.length > 0 ? plans[0].created_at : null),
+                to : (plans.length > 0 ? plans[plans.length -1].updated_at : null)
+            }
+            let log = []
+
+            plans.forEach(plan => {
+                //Sort
+                plan.Payments.sort(function compare(a, b) {
+                    var A = new Date(a.id);
+                    var B = new Date(b.id);
+                    return A - B;
+                  });
+                
+                let payed = 0
+                plan.Payments.forEach(payment => {
+                    payed += payment.amount
+                    const item = {
+                        plan_id : plan.id,
+                        payment_id : payment.id,
+                        section : plan.Section.code,
+                        bill : plan.amount,
+                        payed : payment.amount,
+                        balance : (plan.amount - payed),
+                        date : payment.date,
+                        status : plan.active,
+                        started_at : plan.started_at,
+                        expires_at : plan.expires_at,
+                        created_at : payment.created_at
+                    }
+                    log.push(item)
+                })
+            })
+
+            return res.status(200).send({
+                message : 'Successfully fetched data',
+                payments : log,
+                details
+            })
+
+        } catch (error) {
+            return res.status(400).send({
+                success : false,
+                message : "Unable to fetch statement",
+                error : error.toString() || "Failed"
+            })
+        }
+    }
 }
 
 module.exports = HomeController;

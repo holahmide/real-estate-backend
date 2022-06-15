@@ -1,14 +1,14 @@
-const path = require('path')
+require('dotenv').config();
 
 module.exports = {
     port: process.env.PORT || 3000,
     db : {
-        database: process.env.DB_NAME || 'real_estate1',
+        database: process.env.DB_NAME,
         user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASS || '',
+        password: process.env.DB_PASS,
         options: {
-            dialect : process.env.DIALECT || 'mysql',
-            host : process.env.HOST || 'localhost',
+            dialect : 'mysql',
+            host : process.env.DB_HOST || 'localhost',
             define: {
               timestamps: true,
               underscored: true,
