@@ -4,7 +4,7 @@ node_modules
 package-lock.json
 /docs/.vuepress/dist
 # local env files
-.env.local
+.env
 .env.*.local
 
 # Log files
